@@ -7,14 +7,29 @@ import {
   Zap,
   ShieldCheck,
   Brain,
+  Thermometer,
+  Car,
+  Activity,
+  Clock,
 } from "lucide-react"
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 function App() {
   const [activePage, setActivePage] = useState("Dashboard")
   const [batteryData, setBatteryData] = useState(null)
   const [connected, setConnected] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState("")
+  const [chartData, setChartData] = useState([])
 
-  // Connect to ThingSpeak Cloud
   useEffect(() => {
     const getBatteryData = () => {
       fetch(
@@ -31,38 +46,60 @@ function App() {
           console.log("ThingSpeak Data:", data)
 
           const convertedData = {
-            // Field 1
             voltage: Number(data.field1) || 0,
-
-            // Field 2
             current: Number(data.field2) || 0,
-
-            // Field 3
             temperature: Number(data.field3) || 0,
-
-            // Field 4
             batteryPercentage: Number(data.field4) || 0,
-
-            // Field 5
             batteryHealth: Number(data.field5) || 0,
-
-            // Field 6
             lifeRemaining: Number(data.field6) || 0,
-
-            // Field 7
             fireDetected: Number(data.field7) === 1,
-
-            // Field 8
             motorON: Number(data.field8) === 1,
-
-            // Charging is calculated from current
             charging: Number(data.field2) > 0.05,
           }
 
-          console.log("Converted Battery Data:", convertedData)
-
           setBatteryData(convertedData)
           setConnected(true)
+
+          /* =========================
+             LIVE GRAPH DATA
+          ========================= */
+
+          const graphPoint = {
+            time: data.created_at
+              ? new Date(data.created_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })
+              : new Date().toLocaleTimeString(),
+
+            battery: Number(data.field4) || 0,
+            voltage: Number(data.field1) || 0,
+            current: Number(data.field2) || 0,
+            temperature: Number(data.field3) || 0,
+          }
+
+          setChartData((previousData) => {
+            const updatedData = [...previousData, graphPoint]
+
+            return updatedData.slice(-20)
+          })
+
+          /* =========================
+             LAST UPDATED
+          ========================= */
+
+          if (data.created_at) {
+            const date = new Date(data.created_at)
+
+            setLastUpdated(
+              date.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })
+            )
+          }
         })
         .catch((error) => {
           console.error("ThingSpeak connection error:", error)
@@ -70,10 +107,8 @@ function App() {
         })
     }
 
-    // Get data immediately
     getBatteryData()
 
-    // Get latest data every 5 seconds
     const interval = setInterval(getBatteryData, 5000)
 
     return () => clearInterval(interval)
@@ -82,34 +117,38 @@ function App() {
   const menuItems = [
     {
       name: "Dashboard",
-      icon: <LayoutDashboard size={20} />,
+      icon: <LayoutDashboard size={19} />,
     },
     {
       name: "Battery Health",
-      icon: <Battery size={20} />,
+      icon: <Battery size={19} />,
     },
     {
       name: "Charging",
-      icon: <Zap size={20} />,
+      icon: <Zap size={19} />,
     },
     {
       name: "Safety",
-      icon: <ShieldCheck size={20} />,
+      icon: <ShieldCheck size={19} />,
     },
     {
       name: "AI Prediction",
-      icon: <Brain size={20} />,
+      icon: <Brain size={19} />,
     },
   ]
 
   return (
     <div className="app">
 
-      {/* Sidebar */}
       <aside className="sidebar">
 
         <div className="logo">
-          EV Monitor
+          <span className="logo-icon">⚡</span>
+          EV MONITOR
+        </div>
+
+        <div className="sidebar-label">
+          VEHICLE SYSTEM
         </div>
 
         <nav>
@@ -129,16 +168,8 @@ function App() {
           ))}
         </nav>
 
-      </aside>
-
-      {/* Main Content */}
-      <main className="main-content">
-
-        <header className="topbar">
-
-          <h1>{activePage}</h1>
-
-          <div className="connection-status">
+        <div className="sidebar-bottom">
+          <div className="system-status">
 
             <span
               className={
@@ -148,48 +179,107 @@ function App() {
               }
             ></span>
 
-            {connected
-              ? "Cloud Connected"
-              : "Connecting..."}
+            <div>
+              <strong>
+                {connected ? "SYSTEM ONLINE" : "OFFLINE"}
+              </strong>
+
+              <small>
+                {connected
+                  ? "Cloud synchronized"
+                  : "Connection lost"}
+              </small>
+            </div>
+
+          </div>
+        </div>
+
+      </aside>
+
+
+      <main className="main-content">
+
+        <header className="topbar">
+
+          <div>
+            <div className="page-label">
+              EV BATTERY MANAGEMENT SYSTEM
+            </div>
+
+            <h1>{activePage}</h1>
+          </div>
+
+          <div className="topbar-right">
+
+            <div className="last-update">
+              <Clock size={15} />
+
+              <span>
+                Updated {lastUpdated || "--:--:--"}
+              </span>
+            </div>
+
+            <div className="connection-status">
+
+              <span
+                className={
+                  connected
+                    ? "status-dot online"
+                    : "status-dot offline"
+                }
+              ></span>
+
+              {connected
+                ? "Cloud Connected"
+                : "Connecting..."}
+
+            </div>
 
           </div>
 
         </header>
 
+
         {!batteryData ? (
+
           <div className="loading">
-            Connecting to Cloud...
+            <div className="loading-circle"></div>
+            <span>Connecting to EV Cloud...</span>
           </div>
+
         ) : (
+
           <>
-            {/* DASHBOARD */}
+
             {activePage === "Dashboard" && (
-              <Dashboard batteryData={batteryData} />
+              <Dashboard
+                batteryData={batteryData}
+                chartData={chartData}
+              />
             )}
 
-            {/* BATTERY HEALTH */}
             {activePage === "Battery Health" && (
               <BatteryHealth batteryData={batteryData} />
             )}
 
-            {/* CHARGING */}
             {activePage === "Charging" && (
               <Charging batteryData={batteryData} />
             )}
 
-            {/* SAFETY */}
             {activePage === "Safety" && (
               <Safety batteryData={batteryData} />
             )}
 
-            {/* AI */}
             {activePage === "AI Prediction" && (
               <AIPrediction batteryData={batteryData} />
             )}
+
           </>
+
         )}
 
       </main>
+
     </div>
   )
 }
@@ -199,110 +289,638 @@ function App() {
    DASHBOARD
 ========================= */
 
-function Dashboard({ batteryData }) {
+function Dashboard({ batteryData, chartData }) {
+
   const fireDetected = batteryData.fireDetected
+
+  const battery = Math.max(
+    0,
+    Math.min(100, batteryData.batteryPercentage)
+  )
 
   return (
     <div className="dashboard">
 
-      {/* Emergency Banner */}
       {fireDetected && (
+
         <div className="emergency-banner">
-          ⚠️ FIRE DETECTED — IMMEDIATE ATTENTION REQUIRED
+
+          <div className="emergency-icon">
+            🔥
+          </div>
+
+          <div>
+            <strong>
+              CRITICAL SAFETY ALERT
+            </strong>
+
+            <span>
+              Fire detected by battery safety sensor
+            </span>
+          </div>
+
+          <div className="emergency-pulse">
+            ALERT
+          </div>
+
         </div>
+
       )}
 
-      {/* Cards */}
-      <div className="cards">
 
-        {/* Battery */}
-        <div className="card">
-          <Battery size={32} />
+      <div className="hero-grid">
 
-          <h3>Battery</h3>
+        <section className="battery-hero">
 
-          <h2>
-            {batteryData.batteryPercentage}%
-          </h2>
+          <div className="hero-heading">
 
-          <p>Battery Level</p>
-        </div>
+            <div>
 
+              <span className="section-label">
+                BATTERY STATUS
+              </span>
 
-        {/* Voltage */}
-        <div className="card">
-          <Zap size={32} />
+              <h2>
+                Energy Level
+              </h2>
 
-          <h3>Voltage</h3>
+            </div>
 
-          <h2>
-            {Number(batteryData.voltage).toFixed(2)} V
-          </h2>
+            <Battery size={25} />
 
-          <p>Battery Voltage</p>
-        </div>
+          </div>
 
 
-        {/* Current */}
-        <div className="card">
-          <Zap size={32} />
+          <div className="battery-gauge">
 
-          <h3>Current</h3>
+            <div
+              className="gauge-ring"
+              style={{
+                "--progress": `${battery * 3.6}deg`,
+              }}
+            >
 
-          <h2>
-            {Number(batteryData.current).toFixed(2)} A
-          </h2>
+              <div className="gauge-inner">
 
-          <p>Battery Current</p>
-        </div>
+                <div className="battery-number">
+                  {battery.toFixed(0)}
+                  <span>%</span>
+                </div>
+
+                <div className="battery-label">
+                  CHARGE
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
 
 
-        {/* Safety */}
-        <div
-          className={
-            fireDetected
-              ? "card safety-card danger-card"
-              : "card safety-card safe-card"
-          }
-        >
-          <ShieldCheck size={32} />
+          <div className="battery-bottom">
 
-          <h3>Safety</h3>
+            <div>
+              <span>VOLTAGE</span>
 
-          <h2>
-            {fireDetected
-              ? "🔥 FIRE DETECTED"
-              : "✓ SAFE"}
-          </h2>
+              <strong>
+                {batteryData.voltage.toFixed(2)} V
+              </strong>
+            </div>
 
-          <p>
-            {fireDetected
-              ? "Fire detected by sensor"
-              : "All systems normal"}
-          </p>
+            <div>
+              <span>HEALTH</span>
+
+              <strong>
+                {batteryData.batteryHealth}%
+              </strong>
+            </div>
+
+            <div>
+              <span>RANGE LIFE</span>
+
+              <strong>
+                {batteryData.lifeRemaining} yrs
+              </strong>
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <div className="metrics-grid">
+
+          <MetricCard
+            icon={<Zap />}
+            title="Voltage"
+            value={batteryData.voltage.toFixed(2)}
+            unit="V"
+            description="Battery voltage"
+          />
+
+          <MetricCard
+            icon={<Activity />}
+            title="Current"
+            value={batteryData.current.toFixed(2)}
+            unit="A"
+            description={
+              batteryData.charging
+                ? "Charging active"
+                : "Standby current"
+            }
+          />
+
+          <MetricCard
+            icon={<Thermometer />}
+            title="Temperature"
+            value={batteryData.temperature.toFixed(1)}
+            unit="°C"
+            description="Battery temperature"
+          />
+
+          <MetricCard
+            icon={<Car />}
+            title="Motor"
+            value={
+              batteryData.motorON
+                ? "ON"
+                : "OFF"
+            }
+            unit=""
+            description={
+              batteryData.motorON
+                ? "Vehicle active"
+                : "Vehicle stopped"
+            }
+          />
+
         </div>
 
       </div>
 
 
-      {/* Temperature */}
-      <section className="info-card">
+      {/* =========================
+          LIVE GRAPHS
+      ========================= */}
 
-        <h2>Battery Temperature</h2>
+      <LiveGraphs chartData={chartData} />
 
-        <div className="temperature">
 
-          <span>
-            {Number(batteryData.temperature).toFixed(1)} °C
-          </span>
+      {/* =========================
+          BOTTOM STATUS
+      ========================= */}
 
-          <span className="normal">
-            Normal
-          </span>
+      <div className="bottom-grid">
+
+        <div
+          className={
+            fireDetected
+              ? "status-panel danger-panel"
+              : "status-panel safe-panel"
+          }
+        >
+
+          <div className="status-panel-icon">
+            <ShieldCheck size={27} />
+          </div>
+
+          <div>
+
+            <span className="section-label">
+              SAFETY SYSTEM
+            </span>
+
+            <h3>
+              {fireDetected
+                ? "DANGER DETECTED"
+                : "ALL SYSTEMS SAFE"}
+            </h3>
+
+            <p>
+              {fireDetected
+                ? "Immediate inspection required"
+                : "No fire detected by sensors"}
+            </p>
+
+          </div>
+
+          <div className="status-pill">
+            {fireDetected
+              ? "ALERT"
+              : "SAFE"}
+          </div>
 
         </div>
 
-      </section>
+
+        <div className="status-panel charging-panel">
+
+          <div className="status-panel-icon charging-icon">
+            <Zap size={27} />
+          </div>
+
+          <div>
+
+            <span className="section-label">
+              POWER SYSTEM
+            </span>
+
+            <h3>
+              {batteryData.charging
+                ? "CHARGING"
+                : "NOT CHARGING"}
+            </h3>
+
+            <p>
+              Current: {batteryData.current.toFixed(2)} A
+            </p>
+
+          </div>
+
+          <div className="status-pill charging-pill">
+            {batteryData.charging
+              ? "ACTIVE"
+              : "IDLE"}
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  )
+}
+
+
+/* =========================
+   LIVE GRAPHS
+========================= */
+
+function LiveGraphs({ chartData }) {
+
+  return (
+    <section className="charts-section">
+
+      <div className="charts-heading">
+
+        <div>
+          <span className="section-label">
+            REAL-TIME ANALYTICS
+          </span>
+
+          <h2>
+            Live Battery Telemetry
+          </h2>
+        </div>
+
+        <div className="live-indicator">
+          <span></span>
+          LIVE
+        </div>
+
+      </div>
+
+
+      <div className="charts-grid">
+
+
+        {/* BATTERY */}
+
+        <div className="chart-card">
+
+          <div className="chart-header">
+
+            <div>
+              <span>BATTERY LEVEL</span>
+
+              <strong>
+                {chartData.length > 0
+                  ? `${chartData[chartData.length - 1].battery.toFixed(0)}%`
+                  : "--"}
+              </strong>
+            </div>
+
+            <Battery size={22} />
+
+          </div>
+
+          <div className="chart-container">
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart data={chartData}>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.08)"
+                />
+
+                <XAxis
+                  dataKey="time"
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                  minTickGap={30}
+                />
+
+                <YAxis
+                  domain={[0, 100]}
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    background: "#101722",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    color: "#fff",
+                  }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="battery"
+                  stroke="#7dd3fc"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          </div>
+
+        </div>
+
+
+        {/* VOLTAGE */}
+
+        <div className="chart-card">
+
+          <div className="chart-header">
+
+            <div>
+              <span>VOLTAGE</span>
+
+              <strong>
+                {chartData.length > 0
+                  ? `${chartData[chartData.length - 1].voltage.toFixed(2)} V`
+                  : "--"}
+              </strong>
+            </div>
+
+            <Zap size={22} />
+
+          </div>
+
+          <div className="chart-container">
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart data={chartData}>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.08)"
+                />
+
+                <XAxis
+                  dataKey="time"
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                  minTickGap={30}
+                />
+
+                <YAxis
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    background: "#101722",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    color: "#fff",
+                  }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="voltage"
+                  stroke="#a78bfa"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          </div>
+
+        </div>
+
+
+        {/* CURRENT */}
+
+        <div className="chart-card">
+
+          <div className="chart-header">
+
+            <div>
+              <span>CURRENT</span>
+
+              <strong>
+                {chartData.length > 0
+                  ? `${chartData[chartData.length - 1].current.toFixed(2)} A`
+                  : "--"}
+              </strong>
+            </div>
+
+            <Activity size={22} />
+
+          </div>
+
+          <div className="chart-container">
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart data={chartData}>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.08)"
+                />
+
+                <XAxis
+                  dataKey="time"
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                  minTickGap={30}
+                />
+
+                <YAxis
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    background: "#101722",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    color: "#fff",
+                  }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="current"
+                  stroke="#fbbf24"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          </div>
+
+        </div>
+
+
+        {/* TEMPERATURE */}
+
+        <div className="chart-card">
+
+          <div className="chart-header">
+
+            <div>
+              <span>TEMPERATURE</span>
+
+              <strong>
+                {chartData.length > 0
+                  ? `${chartData[chartData.length - 1].temperature.toFixed(1)} °C`
+                  : "--"}
+              </strong>
+            </div>
+
+            <Thermometer size={22} />
+
+          </div>
+
+          <div className="chart-container">
+
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
+              <LineChart data={chartData}>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.08)"
+                />
+
+                <XAxis
+                  dataKey="time"
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                  minTickGap={30}
+                />
+
+                <YAxis
+                  stroke="#7f8b9d"
+                  tick={{ fontSize: 10 }}
+                />
+
+                <Tooltip
+                  contentStyle={{
+                    background: "#101722",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    color: "#fff",
+                  }}
+                />
+
+                <Line
+                  type="monotone"
+                  dataKey="temperature"
+                  stroke="#fb7185"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+
+              </LineChart>
+
+            </ResponsiveContainer>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
+
+
+/* =========================
+   METRIC CARD
+========================= */
+
+function MetricCard({
+  icon,
+  title,
+  value,
+  unit,
+  description,
+}) {
+
+  return (
+    <div className="metric-card">
+
+      <div className="metric-top">
+
+        <div className="metric-icon">
+          {icon}
+        </div>
+
+        <span>
+          {title}
+        </span>
+
+      </div>
+
+      <div className="metric-value">
+        {value}
+        <small>
+          {unit}
+        </small>
+      </div>
+
+      <p>
+        {description}
+      </p>
 
     </div>
   )
@@ -314,27 +932,90 @@ function Dashboard({ batteryData }) {
 ========================= */
 
 function BatteryHealth({ batteryData }) {
+
+  const health = Math.max(
+    0,
+    Math.min(100, batteryData.batteryHealth)
+  )
+
   return (
     <section className="page-card">
 
-      <Battery size={40} />
-
-      <h2>Battery Health</h2>
-
-      <div className="big-value">
-        {batteryData.batteryHealth}%
+      <div className="page-icon">
+        <Battery size={32} />
       </div>
 
-      <p>
-        Battery condition: Excellent
-      </p>
+      <span className="section-label">
+        BATTERY ANALYTICS
+      </span>
 
-      <p>
-        Estimated remaining life:{" "}
-        <strong>
-          {batteryData.lifeRemaining} years
-        </strong>
-      </p>
+      <h2>
+        Battery Health
+      </h2>
+
+      <div className="health-display">
+
+        <div
+          className="health-ring"
+          style={{
+            "--health": `${health * 3.6}deg`,
+          }}
+        >
+
+          <div>
+            <strong>
+              {health}%
+            </strong>
+
+            <span>
+              HEALTH
+            </span>
+          </div>
+
+        </div>
+
+
+        <div className="health-info">
+
+          <div className="health-row">
+            <span>
+              Condition
+            </span>
+
+            <strong>
+              {health >= 80
+                ? "Excellent"
+                : health >= 60
+                  ? "Good"
+                  : "Needs Attention"}
+            </strong>
+          </div>
+
+
+          <div className="health-row">
+            <span>
+              Estimated Life
+            </span>
+
+            <strong>
+              {batteryData.lifeRemaining} years
+            </strong>
+          </div>
+
+
+          <div className="health-row">
+            <span>
+              Voltage
+            </span>
+
+            <strong>
+              {batteryData.voltage.toFixed(2)} V
+            </strong>
+          </div>
+
+        </div>
+
+      </div>
 
     </section>
   )
@@ -346,28 +1027,75 @@ function BatteryHealth({ batteryData }) {
 ========================= */
 
 function Charging({ batteryData }) {
+
   return (
     <section className="page-card">
 
-      <Zap size={40} />
-
-      <h2>Charging Status</h2>
-
-      <div className="charging-status">
-        {batteryData.charging
-          ? "Charging"
-          : "Not Charging"}
+      <div className="page-icon">
+        <Zap size={32} />
       </div>
 
-      <p>
-        Voltage:{" "}
-        {Number(batteryData.voltage).toFixed(2)} V
-      </p>
+      <span className="section-label">
+        POWER MANAGEMENT
+      </span>
 
-      <p>
-        Current:{" "}
-        {Number(batteryData.current).toFixed(2)} A
-      </p>
+      <h2>
+        Charging Status
+      </h2>
+
+
+      <div
+        className={
+          batteryData.charging
+            ? "large-status charging-active"
+            : "large-status charging-idle"
+        }
+      >
+
+        <Zap size={24} />
+
+        {batteryData.charging
+          ? "CHARGING"
+          : "NOT CHARGING"}
+
+      </div>
+
+
+      <div className="detail-grid">
+
+        <div>
+          <span>
+            VOLTAGE
+          </span>
+
+          <strong>
+            {batteryData.voltage.toFixed(2)} V
+          </strong>
+        </div>
+
+
+        <div>
+          <span>
+            CURRENT
+          </span>
+
+          <strong>
+            {batteryData.current.toFixed(2)} A
+          </strong>
+        </div>
+
+
+        <div>
+          <span>
+            BATTERY
+          </span>
+
+          <strong>
+            {batteryData.batteryPercentage}%
+          </strong>
+        </div>
+
+      </div>
 
     </section>
   )
@@ -379,6 +1107,7 @@ function Charging({ batteryData }) {
 ========================= */
 
 function Safety({ batteryData }) {
+
   const fireDetected = batteryData.fireDetected
 
   return (
@@ -390,36 +1119,53 @@ function Safety({ batteryData }) {
       }
     >
 
-      <ShieldCheck size={40} />
+      <div className="page-icon">
+        <ShieldCheck size={32} />
+      </div>
 
-      <h2>Safety Monitoring</h2>
+      <span className="section-label">
+        VEHICLE PROTECTION
+      </span>
+
+      <h2>
+        Safety Monitoring
+      </h2>
+
 
       <div
         className={
           fireDetected
-            ? "safety-status danger-status"
-            : "safety-status safe-status"
+            ? "large-status danger-status"
+            : "large-status safe-status"
         }
       >
+
+        <ShieldCheck size={24} />
+
         {fireDetected
-          ? "🔥 DANGER"
-          : "✓ SAFE"}
+          ? "🔥 DANGER DETECTED"
+          : "✓ SYSTEM SAFE"}
+
       </div>
 
 
-      <div className="safety-details">
+      <div className="detail-grid">
 
-        <div className="safety-item">
-          <span>Temperature</span>
+        <div>
+          <span>
+            TEMPERATURE
+          </span>
 
           <strong>
-            {Number(batteryData.temperature).toFixed(1)} °C
+            {batteryData.temperature.toFixed(1)} °C
           </strong>
         </div>
 
 
-        <div className="safety-item">
-          <span>Motor</span>
+        <div>
+          <span>
+            MOTOR
+          </span>
 
           <strong>
             {batteryData.motorON
@@ -429,13 +1175,15 @@ function Safety({ batteryData }) {
         </div>
 
 
-        <div className="safety-item">
-          <span>Fire Detection</span>
+        <div>
+          <span>
+            FIRE SENSOR
+          </span>
 
           <strong>
             {fireDetected
-              ? "🔥 Fire Detected"
-              : "Normal"}
+              ? "DETECTED"
+              : "NORMAL"}
           </strong>
         </div>
 
@@ -443,10 +1191,12 @@ function Safety({ batteryData }) {
 
 
       {fireDetected && (
+
         <div className="emergency-message">
           ⚠️ Emergency: Fire has been detected.
           Please inspect the vehicle immediately.
         </div>
+
       )}
 
     </section>
@@ -459,27 +1209,57 @@ function Safety({ batteryData }) {
 ========================= */
 
 function AIPrediction({ batteryData }) {
+
   return (
-    <section className="page-card">
+    <section className="page-card ai-page">
 
-      <Brain size={40} />
-
-      <h2>AI Battery Prediction</h2>
-
-      <div className="big-value">
-        {batteryData.batteryHealth}%
+      <div className="page-icon">
+        <Brain size={32} />
       </div>
 
-      <p>
-        Current battery health is excellent.
-      </p>
+      <span className="section-label">
+        INTELLIGENT ANALYTICS
+      </span>
 
-      <p>
-        Estimated remaining battery life:{" "}
-        <strong>
-          {batteryData.lifeRemaining} years
-        </strong>
-      </p>
+      <h2>
+        AI Battery Prediction
+      </h2>
+
+
+      <div className="ai-score">
+
+        <div className="ai-number">
+          {batteryData.batteryHealth}%
+        </div>
+
+        <span>
+          CURRENT HEALTH
+        </span>
+
+      </div>
+
+
+      <div className="prediction-box">
+
+        <Brain size={22} />
+
+        <div>
+
+          <strong>
+            Battery Condition: Excellent
+          </strong>
+
+          <p>
+            Estimated remaining battery life:
+            {" "}
+            <b>
+              {batteryData.lifeRemaining} years
+            </b>
+          </p>
+
+        </div>
+
+      </div>
 
     </section>
   )
