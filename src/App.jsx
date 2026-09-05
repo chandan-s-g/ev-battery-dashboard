@@ -11,6 +11,9 @@ import {
   Car,
   Activity,
   Clock,
+  Gauge,
+  Wrench,
+  Map,
 } from "lucide-react"
 
 import {
@@ -60,10 +63,6 @@ function App() {
           setBatteryData(convertedData)
           setConnected(true)
 
-          /* =========================
-             LIVE GRAPH DATA
-          ========================= */
-
           const graphPoint = {
             time: data.created_at
               ? new Date(data.created_at).toLocaleTimeString([], {
@@ -84,10 +83,6 @@ function App() {
 
             return updatedData.slice(-20)
           })
-
-          /* =========================
-             LAST UPDATED
-          ========================= */
 
           if (data.created_at) {
             const date = new Date(data.created_at)
@@ -134,6 +129,22 @@ function App() {
     {
       name: "AI Prediction",
       icon: <Brain size={19} />,
+    },
+    {
+      name: "Driving Style Analysis",
+      icon: <Car size={19} />,
+    },
+    {
+      name: "Predictive Maintenance",
+      icon: <Wrench size={19} />,
+    },
+    {
+      name: "Range Prediction",
+      icon: <Map size={19} />,
+    },
+    {
+      name: "Energy Consumption",
+      icon: <Gauge size={19} />,
     },
   ]
 
@@ -196,7 +207,6 @@ function App() {
 
       </aside>
 
-
       <main className="main-content">
 
         <header className="topbar">
@@ -239,7 +249,6 @@ function App() {
 
         </header>
 
-
         {!batteryData ? (
 
           <div className="loading">
@@ -272,6 +281,30 @@ function App() {
 
             {activePage === "AI Prediction" && (
               <AIPrediction batteryData={batteryData} />
+            )}
+
+            {activePage === "Driving Style Analysis" && (
+              <DrivingStyleAnalysis
+                batteryData={batteryData}
+              />
+            )}
+
+            {activePage === "Predictive Maintenance" && (
+              <PredictiveMaintenance
+                batteryData={batteryData}
+              />
+            )}
+
+            {activePage === "Range Prediction" && (
+              <RangePrediction
+                batteryData={batteryData}
+              />
+            )}
+
+            {activePage === "Energy Consumption" && (
+              <EnergyConsumption
+                batteryData={batteryData}
+              />
             )}
 
           </>
@@ -327,7 +360,6 @@ function Dashboard({ batteryData, chartData }) {
 
       )}
 
-
       <div className="hero-grid">
 
         <section className="battery-hero">
@@ -349,7 +381,6 @@ function Dashboard({ batteryData, chartData }) {
             <Battery size={25} />
 
           </div>
-
 
           <div className="battery-gauge">
 
@@ -376,7 +407,6 @@ function Dashboard({ batteryData, chartData }) {
             </div>
 
           </div>
-
 
           <div className="battery-bottom">
 
@@ -407,7 +437,6 @@ function Dashboard({ batteryData, chartData }) {
           </div>
 
         </section>
-
 
         <div className="metrics-grid">
 
@@ -459,17 +488,7 @@ function Dashboard({ batteryData, chartData }) {
 
       </div>
 
-
-      {/* =========================
-          LIVE GRAPHS
-      ========================= */}
-
       <LiveGraphs chartData={chartData} />
-
-
-      {/* =========================
-          BOTTOM STATUS
-      ========================= */}
 
       <div className="bottom-grid">
 
@@ -512,7 +531,6 @@ function Dashboard({ batteryData, chartData }) {
           </div>
 
         </div>
-
 
         <div className="status-panel charging-panel">
 
@@ -581,11 +599,7 @@ function LiveGraphs({ chartData }) {
 
       </div>
 
-
       <div className="charts-grid">
-
-
-        {/* BATTERY */}
 
         <div className="chart-card">
 
@@ -658,9 +672,6 @@ function LiveGraphs({ chartData }) {
 
         </div>
 
-
-        {/* VOLTAGE */}
-
         <div className="chart-card">
 
           <div className="chart-header">
@@ -731,9 +742,6 @@ function LiveGraphs({ chartData }) {
 
         </div>
 
-
-        {/* CURRENT */}
-
         <div className="chart-card">
 
           <div className="chart-header">
@@ -803,9 +811,6 @@ function LiveGraphs({ chartData }) {
           </div>
 
         </div>
-
-
-        {/* TEMPERATURE */}
 
         <div className="chart-card">
 
@@ -974,7 +979,6 @@ function BatteryHealth({ batteryData }) {
 
         </div>
 
-
         <div className="health-info">
 
           <div className="health-row">
@@ -991,7 +995,6 @@ function BatteryHealth({ batteryData }) {
             </strong>
           </div>
 
-
           <div className="health-row">
             <span>
               Estimated Life
@@ -1001,7 +1004,6 @@ function BatteryHealth({ batteryData }) {
               {batteryData.lifeRemaining} years
             </strong>
           </div>
-
 
           <div className="health-row">
             <span>
@@ -1043,7 +1045,6 @@ function Charging({ batteryData }) {
         Charging Status
       </h2>
 
-
       <div
         className={
           batteryData.charging
@@ -1060,7 +1061,6 @@ function Charging({ batteryData }) {
 
       </div>
 
-
       <div className="detail-grid">
 
         <div>
@@ -1073,7 +1073,6 @@ function Charging({ batteryData }) {
           </strong>
         </div>
 
-
         <div>
           <span>
             CURRENT
@@ -1083,7 +1082,6 @@ function Charging({ batteryData }) {
             {batteryData.current.toFixed(2)} A
           </strong>
         </div>
-
 
         <div>
           <span>
@@ -1131,7 +1129,6 @@ function Safety({ batteryData }) {
         Safety Monitoring
       </h2>
 
-
       <div
         className={
           fireDetected
@@ -1148,7 +1145,6 @@ function Safety({ batteryData }) {
 
       </div>
 
-
       <div className="detail-grid">
 
         <div>
@@ -1161,7 +1157,6 @@ function Safety({ batteryData }) {
           </strong>
         </div>
 
-
         <div>
           <span>
             MOTOR
@@ -1173,7 +1168,6 @@ function Safety({ batteryData }) {
               : "OFF"}
           </strong>
         </div>
-
 
         <div>
           <span>
@@ -1188,7 +1182,6 @@ function Safety({ batteryData }) {
         </div>
 
       </div>
-
 
       {fireDetected && (
 
@@ -1225,7 +1218,6 @@ function AIPrediction({ batteryData }) {
         AI Battery Prediction
       </h2>
 
-
       <div className="ai-score">
 
         <div className="ai-number">
@@ -1237,7 +1229,6 @@ function AIPrediction({ batteryData }) {
         </span>
 
       </div>
-
 
       <div className="prediction-box">
 
@@ -1257,6 +1248,393 @@ function AIPrediction({ batteryData }) {
             </b>
           </p>
 
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
+
+
+/* =========================
+   DRIVING STYLE ANALYSIS
+========================= */
+
+function DrivingStyleAnalysis({ batteryData }) {
+
+  const current = Math.abs(batteryData.current)
+  const temperature = batteryData.temperature
+
+  let style = "SMOOTH"
+  let description = "Efficient and gentle driving pattern."
+  let score = 90
+
+  if (current > 2.5 || temperature > 45) {
+    style = "AGGRESSIVE"
+    description = "High power demand detected. Consider smoother acceleration."
+    score = 55
+  } else if (current > 1.2 || temperature > 38) {
+    style = "MODERATE"
+    description = "Normal driving pattern with moderate power demand."
+    score = 75
+  }
+
+  return (
+    <section className="page-card">
+
+      <div className="page-icon">
+        <Car size={32} />
+      </div>
+
+      <span className="section-label">
+        DRIVER INTELLIGENCE
+      </span>
+
+      <h2>
+        Driving Style Analysis
+      </h2>
+
+      <div className="large-status safe-status">
+        <Car size={24} />
+        {style} DRIVING
+      </div>
+
+      <div className="detail-grid">
+
+        <div>
+          <span>
+            DRIVING SCORE
+          </span>
+
+          <strong>
+            {score}/100
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            CURRENT LOAD
+          </span>
+
+          <strong>
+            {batteryData.current.toFixed(2)} A
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            MOTOR
+          </span>
+
+          <strong>
+            {batteryData.motorON ? "ACTIVE" : "IDLE"}
+          </strong>
+        </div>
+
+      </div>
+
+      <div className="prediction-box">
+
+        <Activity size={22} />
+
+        <div>
+          <strong>
+            Driving Behaviour
+          </strong>
+
+          <p>
+            {description}
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
+
+
+/* =========================
+   PREDICTIVE MAINTENANCE
+========================= */
+
+function PredictiveMaintenance({ batteryData }) {
+
+  const health = batteryData.batteryHealth
+  const temperature = batteryData.temperature
+  const voltage = batteryData.voltage
+
+  let status = "SYSTEM HEALTHY"
+  let message = "No immediate maintenance action is required."
+
+  if (health < 60 || temperature > 50) {
+    status = "MAINTENANCE REQUIRED"
+    message = "Battery system requires immediate inspection."
+  } else if (health < 80 || temperature > 40) {
+    status = "MAINTENANCE RECOMMENDED"
+    message = "Schedule a battery system inspection soon."
+  }
+
+  return (
+    <section className="page-card">
+
+      <div className="page-icon">
+        <Wrench size={32} />
+      </div>
+
+      <span className="section-label">
+        VEHICLE DIAGNOSTICS
+      </span>
+
+      <h2>
+        Predictive Maintenance
+      </h2>
+
+      <div className="large-status safe-status">
+        <Wrench size={24} />
+        {status}
+      </div>
+
+      <div className="detail-grid">
+
+        <div>
+          <span>
+            BATTERY HEALTH
+          </span>
+
+          <strong>
+            {health}%
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            TEMPERATURE
+          </span>
+
+          <strong>
+            {temperature.toFixed(1)} °C
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            VOLTAGE
+          </span>
+
+          <strong>
+            {voltage.toFixed(2)} V
+          </strong>
+        </div>
+
+      </div>
+
+      <div className="prediction-box">
+
+        <Wrench size={22} />
+
+        <div>
+          <strong>
+            Maintenance Recommendation
+          </strong>
+
+          <p>
+            {message}
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
+
+
+/* =========================
+   RANGE PREDICTION
+========================= */
+
+function RangePrediction({ batteryData }) {
+
+  const battery = Math.max(
+    0,
+    Math.min(100, batteryData.batteryPercentage)
+  )
+
+  const estimatedRange = Math.round(
+    battery * 2
+  )
+
+  return (
+    <section className="page-card">
+
+      <div className="page-icon">
+        <Map size={32} />
+      </div>
+
+      <span className="section-label">
+        INTELLIGENT RANGE SYSTEM
+      </span>
+
+      <h2>
+        Range Prediction
+      </h2>
+
+      <div className="ai-score">
+
+        <div className="ai-number">
+          {estimatedRange}
+          <small> km</small>
+        </div>
+
+        <span>
+          ESTIMATED RANGE
+        </span>
+
+      </div>
+
+      <div className="detail-grid">
+
+        <div>
+          <span>
+            BATTERY
+          </span>
+
+          <strong>
+            {battery.toFixed(0)}%
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            HEALTH
+          </span>
+
+          <strong>
+            {batteryData.batteryHealth}%
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            MOTOR
+          </span>
+
+          <strong>
+            {batteryData.motorON ? "ON" : "OFF"}
+          </strong>
+        </div>
+
+      </div>
+
+      <div className="prediction-box">
+
+        <Map size={22} />
+
+        <div>
+          <strong>
+            Range Estimate
+          </strong>
+
+          <p>
+            Estimated using current battery level.
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
+
+
+/* =========================
+   ENERGY CONSUMPTION
+========================= */
+
+function EnergyConsumption({ batteryData }) {
+
+  const current = Math.abs(batteryData.current)
+  const voltage = batteryData.voltage
+
+  const estimatedPower = voltage * current
+
+  let efficiency = "GOOD"
+
+  if (estimatedPower > 1000) {
+    efficiency = "HIGH CONSUMPTION"
+  } else if (estimatedPower > 500) {
+    efficiency = "MODERATE"
+  }
+
+  return (
+    <section className="page-card">
+
+      <div className="page-icon">
+        <Gauge size={32} />
+      </div>
+
+      <span className="section-label">
+        ENERGY ANALYTICS
+      </span>
+
+      <h2>
+        Energy Consumption
+      </h2>
+
+      <div className="large-status safe-status">
+        <Gauge size={24} />
+        {efficiency}
+      </div>
+
+      <div className="detail-grid">
+
+        <div>
+          <span>
+            VOLTAGE
+          </span>
+
+          <strong>
+            {voltage.toFixed(2)} V
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            CURRENT
+          </span>
+
+          <strong>
+            {current.toFixed(2)} A
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            POWER
+          </span>
+
+          <strong>
+            {estimatedPower.toFixed(1)} W
+          </strong>
+        </div>
+
+      </div>
+
+      <div className="prediction-box">
+
+        <Gauge size={22} />
+
+        <div>
+          <strong>
+            Energy Status
+          </strong>
+
+          <p>
+            Current estimated electrical power consumption is{" "}
+            <b>{estimatedPower.toFixed(1)} W</b>.
+          </p>
         </div>
 
       </div>
