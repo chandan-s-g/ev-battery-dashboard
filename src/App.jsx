@@ -12,24 +12,69 @@ import {
 function App() {
   const [activePage, setActivePage] = useState("Dashboard")
   const [batteryData, setBatteryData] = useState(null)
+  const [connected, setConnected] = useState(false)
 
-  // Connect to ESP32
+  // Connect to ThingSpeak Cloud
   useEffect(() => {
     const getBatteryData = () => {
-      fetch("http://192.168.173.239/api/battery")
-        .then((response) => response.json())
+      fetch(
+        "https://api.thingspeak.com/channels/3482326/feeds/last.json"
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("ThingSpeak connection failed")
+          }
+
+          return response.json()
+        })
         .then((data) => {
-          console.log("ESP32 Data:", data)
-          setBatteryData(data)
+          console.log("ThingSpeak Data:", data)
+
+          const convertedData = {
+            // Field 1
+            voltage: Number(data.field1) || 0,
+
+            // Field 2
+            current: Number(data.field2) || 0,
+
+            // Field 3
+            temperature: Number(data.field3) || 0,
+
+            // Field 4
+            batteryPercentage: Number(data.field4) || 0,
+
+            // Field 5
+            batteryHealth: Number(data.field5) || 0,
+
+            // Field 6
+            lifeRemaining: Number(data.field6) || 0,
+
+            // Field 7
+            fireDetected: Number(data.field7) === 1,
+
+            // Field 8
+            motorON: Number(data.field8) === 1,
+
+            // Charging is calculated from current
+            charging: Number(data.field2) > 0.05,
+          }
+
+          console.log("Converted Battery Data:", convertedData)
+
+          setBatteryData(convertedData)
+          setConnected(true)
         })
         .catch((error) => {
-          console.error("ESP32 connection error:", error)
+          console.error("ThingSpeak connection error:", error)
+          setConnected(false)
         })
     }
 
+    // Get data immediately
     getBatteryData()
 
-    const interval = setInterval(getBatteryData, 2000)
+    // Get latest data every 5 seconds
+    const interval = setInterval(getBatteryData, 5000)
 
     return () => clearInterval(interval)
   }, [])
@@ -90,17 +135,30 @@ function App() {
       <main className="main-content">
 
         <header className="topbar">
+
           <h1>{activePage}</h1>
 
           <div className="connection-status">
-            <span className="status-dot"></span>
-            ESP32 Connected
+
+            <span
+              className={
+                connected
+                  ? "status-dot online"
+                  : "status-dot offline"
+              }
+            ></span>
+
+            {connected
+              ? "Cloud Connected"
+              : "Connecting..."}
+
           </div>
+
         </header>
 
         {!batteryData ? (
           <div className="loading">
-            Connecting to ESP32...
+            Connecting to Cloud...
           </div>
         ) : (
           <>
