@@ -912,6 +912,7 @@ nav {
   }
 
 }
+
 /* =========================
    LIVE TELEMETRY CHARTS
 ========================= */
@@ -1027,7 +1028,6 @@ nav {
   }
 }
 
-
 /* =========================
    MOBILE CHARTS
 ========================= */
@@ -1039,7 +1039,6 @@ nav {
   }
 
 }
-
 
 @media (max-width: 600px) {
 
@@ -1058,6 +1057,120 @@ nav {
 
   .chart-container {
     height: 190px;
+  }
+
+}
+
+/* ==================================================
+   PHONE - KEEP DESKTOP DASHBOARD + ALLOW SWIPING
+================================================== */
+
+@media (max-width: 600px) {
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 100%;
+    overflow-x: auto;
+  }
+
+  .app {
+    min-width: 1050px;
+    width: 1050px;
+  }
+
+  .sidebar {
+    width: 255px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 30px 18px;
+  }
+
+  .sidebar-bottom {
+    display: block;
+  }
+
+  .logo {
+    padding: 10px 12px 35px;
+  }
+
+  nav {
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .menu-item {
+    min-width: 0;
+  }
+
+  .main-content {
+    margin-left: 255px;
+    width: calc(100% - 255px);
+    min-width: 795px;
+    padding: 30px 42px 50px;
+  }
+
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  .topbar-right {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1.05fr 1.45fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .charts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .charts-heading {
+    align-items: center;
+  }
+
+  .charts-heading h2 {
+    font-size: 22px;
+  }
+
+  .chart-card {
+    padding: 20px;
+  }
+
+  .chart-container {
+    height: 220px;
+  }
+
+  .battery-bottom {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .health-display {
+    flex-direction: row;
+    gap: 60px;
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .page-card {
+    padding: 40px;
   }
 
 }
